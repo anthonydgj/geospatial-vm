@@ -1,0 +1,28 @@
+###############################
+# Stack-Based Virtual Machine #
+###############################
+
+# Import libraries
+Use("virtual-machine.wael") With (VirtualMachine);
+
+# Initialize transform function
+let TRANSFORM = if (TRANSFORM != undefined) 
+    then (TRANSFORM) 
+    else ((v) => (v));
+
+# Initialize instructions 
+let INSTRUCTIONS = if ($0 != undefined) 
+    then ($0) 
+    else (GeometryCollection());
+
+# Decode instructions
+let decodedInstructions = INSTRUCTIONS |* (v) => (
+    if (v != undefined) 
+        then (TRANSFORM(v)) 
+        else (v)
+);
+
+# Run the virtual machine
+let vm = Use(VirtualMachine(decodedInstructions));
+vm:start();
+vm()

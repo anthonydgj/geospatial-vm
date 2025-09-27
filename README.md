@@ -1,1 +1,32 @@
 # geospatial-vm
+
+A program targeted to run on this VM is encoded in a GeoJSON `GEOMETRYCOLLECTION` of `POINT` values interpreted as a list of bytes. For example, the program `GeometryCollection(1 3, 1 4, 10 0, 1 5, 11 0)` is interpreted as bytes `1, 2, 1, 4, 10, 0, 1, 5, 11, 0`.
+
+This program can be run with the following command:
+```
+ts-node ./scripts/wael.ts --outputNonGeoJSON ./examples/stack-vm/prog1.wael ./examples/stack-vm/stack-machine.wael
+```
+
+The output from this command is:
+```
+GEOMETRYCOLLECTION (POINT (2 0))
+```
+
+### Instruction Transformation
+
+Instructions encoded in spatial data formats can be transformed by providing a `TRANSFORM` function.
+
+For example, if the instructions are encoded as follows:
+```
+GeometryCollection(1 3, 1 4, 10 0, 1 5, 11 0) | Rotate(59)
+```
+
+They can be transformed to instructions understood by the VM with the command:
+```
+ts-node ./scripts/wael.ts --bind-import="PROGRAM=./examples/stack-vm/prog1.wael" -e "TRANSFORM = (v) => (v | Rotate(-59) | Round(1))" ./examples/stack-vm/stack-machine.wael --outputNonGeoJSON
+```
+
+Which will output the same result as above:
+```
+GEOMETRYCOLLECTION (POINT (2 0))
+```
