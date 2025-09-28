@@ -1,1 +1,1 @@
-export let Byte = (val) => (val % 128 | Round());
+export let Byte = (val) => (val % 128 | Round(1));

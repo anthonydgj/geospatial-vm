@@ -2,6 +2,7 @@
 # Stack-Based Virtual Machine #
 ###############################
 
+
 # Import libraries
 Use("virtual-machine.wael") With (VirtualMachine);
 
@@ -11,8 +12,8 @@ let TRANSFORM = if (TRANSFORM != undefined)
     else ((v) => (v));
 
 # Initialize instructions 
-let INSTRUCTIONS = if ($0 != undefined) 
-    then ($0) 
+let INSTRUCTIONS = if (PROGRAM != undefined) 
+    then (PROGRAM) 
     else (GeometryCollection());
 
 # Decode instructions
