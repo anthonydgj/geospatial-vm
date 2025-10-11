@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/anthonydgj/geospatial-vm#readme",
   "dependencies": {
-    "wael-lib": "^0.0.21"
+    "wael-lib": "^0.0.24"
   }
 }

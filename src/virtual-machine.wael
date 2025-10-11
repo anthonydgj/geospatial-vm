@@ -74,9 +74,8 @@ export let VirtualMachine = (program) => (
     );
 
     # Process all instructions
-    export let start = () => (
-        Generate 
-            (i => (currentInstCode = readNext(); currentInstCode != undefined)) 
+    export let start = () => ( 
+            (i => (currentInstCode = readNext(); currentInstCode != undefined)) >>
             (i => (step(); 1 1))
     );
 
