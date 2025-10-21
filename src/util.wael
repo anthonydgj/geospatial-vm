@@ -1,0 +1,11 @@
+export let PipeIf = (check, result) => (
+    let c = check;
+    let r = result;
+    (val) => (
+        if ((c == true) or (c(val) == true)) 
+        then (r) 
+        else (val)
+    )
+);
+
+"util"
