@@ -1,4 +1,4 @@
-export let VirtualMachine = (program) => (
+export let VirtualMachine = (programGeometry) => (
 
     # Import libraries
     Use("stack.wael") With (Stack);
@@ -21,6 +21,8 @@ export let VirtualMachine = (program) => (
 
     # Internal state
     let stack = Use(Stack());
+    let program = GeometryCollection();
+    programGeometry |* (p) => (program = program ++ p);
     let instructions = Use(List(program));
     let instPtr = 0;
     let currentInstCode = undefined;
@@ -75,9 +77,10 @@ export let VirtualMachine = (program) => (
     );
 
     # Process all instructions
-    export let start = () => ( 
-            (i => (currentInstCode = readNext(); currentInstCode != undefined)) >>
-            (i => (step(); 0 0))
+    export let start = () => (
+        # Loop until program is done
+        (i => (currentInstCode = readNext(); currentInstCode != undefined)) >>
+        (i => (step(); 0 0))
     );
 
     # Default 
