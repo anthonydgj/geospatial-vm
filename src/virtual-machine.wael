@@ -21,11 +21,11 @@ export let VirtualMachine = (programGeometry) => (
 
     # Internal state
     let stack = Use(Stack());
-    let program = GeometryCollection();
-    programGeometry |* (p) => (program = program ++ p);
-    let instructions = Use(List(program));
+    let instructions = GeometryCollection();
+    programGeometry |* (p) => (instructions = instructions ++ p);
     let instPtr = 0;
     let currentInstCode = undefined;
+    let previousInstCode = undefined;
 
     # Helper functions
     let UnaryOperator = (s, fn) => (a = s:pop(); s:push(fn(a)); s);
@@ -34,6 +34,7 @@ export let VirtualMachine = (programGeometry) => (
     # Instruction implementations
     let Push = () => (
         let nextValue = readNext();
+        nextValue = Math:abs(nextValue:y - nextValue:x);
         if (nextValue != undefined) then (
             stack:push(Byte(nextValue))
         ) else (
@@ -41,46 +42,52 @@ export let VirtualMachine = (programGeometry) => (
         );
         nextValue
     ); 
-    let Pop = () => (
-        stack:pop()
-    );
-    let Add = () => (BinaryOperator(stack, (a, b) => (Byte(a + b))));
-    let Subtract = () => (BinaryOperator(stack, (a, b) => (Byte(b - a))));
-    let Multiply = () => (BinaryOperator(stack, (a, b) => (Byte(a * b))));
-    let Divide = () => (BinaryOperator(stack, (a, b) => (Byte(b / a))));
+    let Pop = () => (stack:pop());
+    let IgnoreNext = () => (instPtr = instPtr + 1);
+    #let Add = () => (BinaryOperator(stack, (a, b) => (Byte(a + b))));
+    #let Subtract = () => (BinaryOperator(stack, (a, b) => (Byte(b - a))));
+    #let Multiply = () => (BinaryOperator(stack, (a, b) => (Byte(a * b))));
+    #let Divide = () => (BinaryOperator(stack, (a, b) => (Byte(b / a))));
 
     # Instruction lookup
-    let Instruction = (code) => (
-        code 
-            | PipeIf(code == CODE_NOOP, () => (stack))
-            | PipeIf(code == CODE_PUSH, Push)
-            | PipeIf(code == CODE_POP, Pop)
-            | PipeIf(code == CODE_ADD, Add)
-            | PipeIf(code == CODE_SUBTRACT, Subtract)
-            | PipeIf(code == CODE_MULTIPLY, Multiply)
-            | PipeIf(code == CODE_DIVIDE, Divide)
+    let Instruction = (p) => (
+        p 
+            | PipeIf(p:x == 0 and p:y == 0, IgnoreNext)
+            | PipeIf(p:x > 0 and p:y > 0, Push)
+            | PipeIf(p:x < 0 and p:y < 0, Pop)
             | PipeIf((v) => (v == code), () => ())
+    );
+
+    # Peek the next instruction
+    let peekNext = () => (
+        let instCode = instructions:geometryN(instPtr);
+        instCode
     );
 
     # Read the next instruction
     let readNext = () => (
-        let instCode = instructions:get(instPtr);
+        let instCode = peekNext();
         instPtr = instPtr + 1;
         instCode
     );
 
     # Execute the next instruction 
     export let step = () => (
-        let instruction = Instruction(currentInstCode);
-        if (instruction != undefined) then (instruction()) else (false);
-        stack()
+        let currentPoint = currentInstCode;
+        let previousPoint = previousInstCode;
+        if ((previousPoint == undefined) or (currentPoint == undefined)) then (false) else (
+            let relativeInstruction = currentPoint - previousPoint;
+            let instruction = Instruction(relativeInstruction);
+            if (instruction != undefined) then (instruction()) else (false)
+        );
+        undefined
     );
 
     # Process all instructions
     export let start = () => (
         # Loop until program is done
         (i => (currentInstCode = readNext(); currentInstCode != undefined)) >>
-        (i => (step(); 0 0))
+            (i => (step(); previousInstCode = currentInstCode))
     );
 
     # Default 
