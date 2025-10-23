@@ -44,6 +44,7 @@ export let VirtualMachine = (programGeometry) => (
     ); 
     let Pop = () => (stack:pop());
     let IgnoreNext = () => (instPtr = instPtr + 1);
+    let Noop = () => ();
     #let Add = () => (BinaryOperator(stack, (a, b) => (Byte(a + b))));
     #let Subtract = () => (BinaryOperator(stack, (a, b) => (Byte(b - a))));
     #let Multiply = () => (BinaryOperator(stack, (a, b) => (Byte(a * b))));
@@ -55,7 +56,13 @@ export let VirtualMachine = (programGeometry) => (
             | PipeIf(p:x == 0 and p:y == 0, IgnoreNext)
             | PipeIf(p:x > 0 and p:y > 0, Push)
             | PipeIf(p:x < 0 and p:y < 0, Pop)
-            | PipeIf((v) => (v == code), () => ())
+            | PipeIf(p:x == 0 and p:y > 0, Noop)
+            | PipeIf(p:x > 0 and p:y == 0, Noop)
+            | PipeIf(p:x == 0 and p:y < 0, Noop)
+            | PipeIf(p:x < 0 and p:y == 0, Noop)
+            | PipeIf(p:x > 0 and p:y < 0, Noop)
+            | PipeIf(p:x < 0 and p:y > 0, Noop)
+            | PipeIf((v) => (v == code), Noop)
     );
 
     # Peek the next instruction
