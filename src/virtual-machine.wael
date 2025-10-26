@@ -7,18 +7,6 @@ export let VirtualMachine = (programGeometry) => (
     Use("list.wael") With (List);
     Use("util.wael") With (PipeIf);
 
-    # Instruction codes
-    let CODE_NOOP = 0;
-    let CODE_PUSH = 1;
-    let CODE_POP = 2;
-    let CODE_ADD = 10;
-    let CODE_SUBTRACT = 11;
-    let CODE_MULTIPLY = 12;
-    let CODE_DIVIDE = 13;
-    let CODE_READ = 20; # TODO
-    let CODE_JUMP = 21; # TODO
-    let CODE_JUMP_IF_ZERO = 22; # TODO
-
     # Internal state
     let stack = Use(Stack());
     let instructions = GeometryCollection();
@@ -30,11 +18,17 @@ export let VirtualMachine = (programGeometry) => (
     # Helper functions
     let UnaryOperator = (s, fn) => (a = s:pop(); s:push(fn(a)); s);
     let BinaryOperator = (s, fn) => (a = s:pop(); b = s:pop(); s:push(fn(a, b)); s);
+    let ReadLiteral = (s, fn) => (
+        let nextValue = readNext();
+        # Value is the absolute difference between x and y coordinates
+        if (nextValue == undefined) then (nextValue) else (
+            Math:abs(nextValue:y - nextValue:x)
+        )
+    );
 
     # Instruction implementations
     let Push = () => (
-        let nextValue = readNext();
-        nextValue = Math:abs(nextValue:y - nextValue:x);
+        let nextValue = ReadLiteral();
         if (nextValue != undefined) then (
             stack:push(Byte(nextValue))
         ) else (
@@ -42,27 +36,41 @@ export let VirtualMachine = (programGeometry) => (
         );
         nextValue
     ); 
-    let Pop = () => (stack:pop());
+    let Drop = () => (stack:pop());
+    let Dup = () => (stack:push(stack:peek()));
+    let Swap = () => (let a = stack:pop(); let b = stack:pop(); stack:push(a); stack:push(b));
+    let Add = () => (BinaryOperator(stack, (a, b) => (Byte(a + b))));
+    let Sub = () => (BinaryOperator(stack, (a, b) => (Byte(b - a))));
+    let Jump = () => (
+        let ptr = ReadLiteral();
+        currentInstCode = undefined;
+        previousInstCode = undefined;
+        instPtr = ptr
+    );
+    let JumpIfZero = () => (
+        let value = stack:pop();
+        if (value == 0) then (
+            Jump()
+        ) else (
+            instPtr = instPtr + 1   # Skip ptr
+        )
+    );
     let IgnoreNext = () => (instPtr = instPtr + 1);
     let Noop = () => ();
-    #let Add = () => (BinaryOperator(stack, (a, b) => (Byte(a + b))));
-    #let Subtract = () => (BinaryOperator(stack, (a, b) => (Byte(b - a))));
-    #let Multiply = () => (BinaryOperator(stack, (a, b) => (Byte(a * b))));
-    #let Divide = () => (BinaryOperator(stack, (a, b) => (Byte(b / a))));
 
     # Instruction lookup
-    let Instruction = (p) => (
-        p 
-            | PipeIf(p:x == 0 and p:y == 0, IgnoreNext)
-            | PipeIf(p:x > 0 and p:y > 0, Push)
-            | PipeIf(p:x < 0 and p:y < 0, Pop)
-            | PipeIf(p:x == 0 and p:y > 0, Noop)
-            | PipeIf(p:x > 0 and p:y == 0, Noop)
-            | PipeIf(p:x == 0 and p:y < 0, Noop)
-            | PipeIf(p:x < 0 and p:y == 0, Noop)
-            | PipeIf(p:x > 0 and p:y < 0, Noop)
-            | PipeIf(p:x < 0 and p:y > 0, Noop)
-            | PipeIf((v) => (v == code), Noop)
+    let Instruction = (delta) => (
+        delta 
+            | PipeIf(delta:x == 0 and delta:y == 0, IgnoreNext) 
+            | PipeIf(delta:x > 0 and delta:y > 0,   Push)       
+            | PipeIf(delta:x < 0 and delta:y < 0,   Drop)       
+            | PipeIf(delta:x == 0 and delta:y > 0,  Dup)        
+            | PipeIf(delta:x > 0 and delta:y == 0,  Swap)       
+            | PipeIf(delta:x == 0 and delta:y < 0,  Add)        
+            | PipeIf(delta:x < 0 and delta:y == 0,  Sub)        
+            | PipeIf(delta:x > 0 and delta:y < 0,   JumpIfZero) 
+            | PipeIf(delta:x < 0 and delta:y > 0,   Jump)       
+            | PipeIf((v) => (v == delta), Noop)
     );
 
     # Peek the next instruction
@@ -75,6 +83,8 @@ export let VirtualMachine = (programGeometry) => (
     let readNext = () => (
         let instCode = peekNext();
         instPtr = instPtr + 1;
+        previousInstCode = currentInstCode;
+        currentInstCode = instCode;
         instCode
     );
 
@@ -82,19 +92,20 @@ export let VirtualMachine = (programGeometry) => (
     export let step = () => (
         let currentPoint = currentInstCode;
         let previousPoint = previousInstCode;
-        if ((previousPoint == undefined) or (currentPoint == undefined)) then (false) else (
+        if ((previousPoint == undefined) or (currentPoint == undefined)) then (undefined) else (
             let relativeInstruction = currentPoint - previousPoint;
             let instruction = Instruction(relativeInstruction);
-            if (instruction != undefined) then (instruction()) else (false)
-        );
-        undefined
+            if (instruction != undefined) then (instruction(); undefined) else (false)
+        )
     );
 
     # Process all instructions
     export let start = () => (
         # Loop until program is done
-        (i => (currentInstCode = readNext(); currentInstCode != undefined)) >>
-            (i => (step(); previousInstCode = currentInstCode))
+        (i => (readNext(); currentInstCode != undefined)) >>
+            (i => (if (step() == false)
+                then (currentInstCode = undefined)
+                else (undefined)))
     );
 
     # Default 
