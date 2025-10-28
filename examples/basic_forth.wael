@@ -1,0 +1,23 @@
+Use("../src/geospatial-lang.wael") With (*);
+
+Program() 
+    | Push(1)
+    | Push(5)
+    | Push(9)
+    | Push(10)
+    | Push(15)
+    | Push(10)
+    | Drop()
+    | Dup()
+    | Jump(22)
+    | Dup()
+    | Dup()
+    | Dup()
+    | Dup()
+    | Push(10)
+    | Push(11)
+    | Dup(11)
+    | Add()
+    | Sub()
+    | Swap()
+

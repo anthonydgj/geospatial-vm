@@ -1,0 +1,55 @@
+export let Program = () => (
+    let _start = Point(0 0);
+    GeometryCollection(_start)
+);
+
+export let Push = (pushVal) => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (1 1);
+    prog ++ cmd ++ (0 pushVal)
+));
+
+export let Drop = () => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (-1 -1);
+    prog ++ cmd
+));
+
+export let Dup = () => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (0 1);
+    prog ++ cmd
+));
+
+export let Swap = () => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (1 0);
+    prog ++ cmd
+));
+
+export let Add = () => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (0 -1);
+    prog ++ cmd
+));
+
+export let Sub = () => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (-1 0);
+    prog ++ cmd
+));
+
+export let JZ = (instPtr) => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (1 -1);
+    prog ++ cmd ++ (0 instPtr)
+));
+
+export let Jump = (instPtr) => ((prog) => (
+    let prev = prog:geometryN(prog:numGeometries() - 1);
+    let cmd = prev + (-1 1);
+    prog ++ cmd ++ (0 instPtr)
+));
+
+
+"geospatial-lang"
